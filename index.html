@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka – Plisé žaluzie Lagarta</title>
+<style>
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e2e0d8; --border-mid: #c8c6bc;
+    --text: #1a1917; --text-muted: #6b6960; --text-hint: #9e9b90;
+    --accent: #2a5c3f; --accent-light: #e8f2ec; --accent-text: #1e4530;
+    --warn-bg: #fef8ec; --warn-text: #8a6000; --danger: #c0392b;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  h1 { font-size: 1.6rem; font-weight: normal; letter-spacing: -0.02em; margin-bottom: 1.5rem; }
+  .container { max-width: 820px; margin: 0 auto; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 12px; }
+  .sec-title { font-size: 10px; font-weight: bold; letter-spacing: .1em; text-transform: uppercase; color: var(--text-hint); font-family: Arial, sans-serif; margin-bottom: 14px; }
+  label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 5px; font-family: Arial, sans-serif; }
+  input[type=number], input[type=text], select { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: Arial, sans-serif; outline: none; transition: border-color .15s; }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,92,63,.1); }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .pripl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+  .pitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; user-select: none; font-family: Arial, sans-serif; transition: background .1s, border-color .1s; }
+  .pitem:hover { background: var(--accent-light); }
+  .pitem.on { border-color: var(--accent); background: var(--accent-light); }
+  .pitem.on .pn { color: var(--accent-text); } .pitem.on .pp { color: var(--accent); }
+  .pn { color: var(--text-muted); max-width: 74%; line-height: 1.3; }
+  .pp { color: var(--text-hint); font-weight: bold; white-space: nowrap; font-size: 11px; }
+  .lak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+  .lak-item { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: Arial, sans-serif; font-size: 12px; }
+  .lak-item label { margin: 0; flex: 1; color: var(--text-muted); font-size: 12px; }
+  .lak-item input { width: 65px; height: 28px; padding: 0 6px; font-size: 12px; flex-shrink: 0; }
+  .lak-unit { color: var(--text-hint); font-size: 11px; white-space: nowrap; }
+  .prodl-row { display: flex; align-items: center; gap: 10px; padding: 7px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: Arial, sans-serif; font-size: 12px; margin-bottom: 12px; }
+  .prodl-row label { margin: 0; color: var(--text-muted); flex: 1; }
+  .prodl-row select { width: auto; min-width: 200px; height: 30px; font-size: 12px; }
+  .nahled { background: var(--accent-light); border: 1px solid rgba(42,92,63,.25); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; font-family: Arial, sans-serif; }
+  .nahled-title { font-size: 10px; font-weight: bold; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 8px; }
+  .nahled-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+  .nahled-row .nl { color: var(--text-muted); } .nahled-row .nv { font-weight: bold; }
+  .nahled-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: bold; padding-top: 8px; margin-top: 6px; border-top: 1px solid rgba(42,92,63,.2); }
+  .nahled-total .nl { color: var(--accent-text); } .nahled-total .nv { color: var(--accent); }
+  .add-btn { width: 100%; padding: 11px; border: 1.5px dashed var(--border-mid); border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; font-family: Arial, sans-serif; transition: all .15s; }
+  .add-btn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); color: var(--accent-text); }
+  .add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .save-btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; font-family: Arial, sans-serif; transition: background .15s; margin-top: 10px; }
+  .save-btn:hover { background: var(--accent-text); }
+  .save-btn:disabled { background: var(--text-hint); cursor: not-allowed; }
+  .polozka { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
+  .pol-head { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; cursor: pointer; user-select: none; transition: background .1s; font-family: Arial, sans-serif; }
+  .pol-head:hover { background: var(--bg); }
+  .pol-num { font-size: 11px; color: var(--text-hint); min-width: 22px; }
+  .pol-title { font-size: 13px; font-weight: bold; }
+  .pol-meta { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+  .pol-price { font-size: 13px; font-weight: bold; color: var(--accent); margin-right: 10px; }
+  .pol-del { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 18px; padding: 0 4px; line-height: 1; }
+  .pol-del:hover { color: var(--danger); }
+  .pol-body { padding: 12px 14px; border-top: 1px solid var(--border); background: var(--bg); display: none; font-family: Arial, sans-serif; }
+  .bd-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .bd-row:last-child { border: none; font-weight: bold; font-size: 13px; padding-top: 8px; }
+  .bd-l { color: var(--text-muted); } .bd-v { font-weight: bold; }
+  .warn { font-size: 12px; color: var(--warn-text); background: var(--warn-bg); border-radius: var(--radius-sm); padding: 7px 11px; margin-top: 8px; border: 1px solid #f0d080; }
+  .ap1-warn { font-size: 11px; color: var(--warn-text); background: var(--warn-bg); border: 1px solid #f0d080; border-radius: 4px; padding: 5px 10px; margin-bottom: 10px; display: none; }
+  .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .metric { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; font-family: Arial, sans-serif; }
+  .ml { font-size: 11px; color: var(--text-hint); margin-bottom: 4px; }
+  .mv { font-size: 20px; font-weight: bold; }
+  .total-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-family: Arial, sans-serif; }
+  .total-row:last-child { border: none; font-weight: bold; font-size: 16px; padding-top: 10px; color: var(--accent-text); }
+  .tl { color: var(--text-muted); } .tv { font-weight: bold; }
+  .chevron { display: inline-block; font-size: 12px; color: var(--text-hint); transition: transform .2s; }
+  .open .chevron { transform: rotate(180deg); }
+  .empty { font-size: 13px; color: var(--text-hint); font-family: Arial, sans-serif; }
+  .zona-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 7px; margin-bottom: 6px; }
+  .zona-btn { padding: 10px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-family: Arial, sans-serif; font-size: 12px; text-align: center; transition: all .15s; line-height: 1.4; }
+  .zona-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+  .zona-btn.zon-active { border-color: var(--accent); background: var(--accent-light); color: var(--accent-text); font-weight: bold; }
+  .zona-emoji { font-size: 18px; display: block; margin-bottom: 4px; }
+  .zona-name { display: block; font-weight: bold; font-size: 11px; }
+  .zona-km { display: block; font-size: 10px; color: var(--text-hint); margin-top: 1px; }
+  .zona-price { display: block; font-size: 12px; font-weight: bold; margin-top: 3px; }
+  .note { font-size: 11px; color: var(--text-hint); margin-top: 6px; font-family: Arial, sans-serif; }
+  .status { font-size: 13px; font-family: Arial, sans-serif; padding: 10px 14px; border-radius: var(--radius-sm); margin-top: 10px; display: none; }
+  .status.ok { background: var(--accent-light); color: var(--accent-text); border: 1px solid rgba(42,92,63,.2); }
+  .status.err { background: #fde8e8; color: var(--danger); border: 1px solid #f0b0b0; }
+  @media (max-width: 600px) {
+    .g4 { grid-template-columns: 1fr 1fr; }
+    .metric-row { grid-template-columns: 1fr 1fr; }
+    .pripl-grid, .lak-grid { grid-template-columns: 1fr; }
+    .zona-grid { grid-template-columns: repeat(3,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Plisé žaluzie Lagarta</h1>
+
+  <div class="card">
+    <div class="sec-title">Zákazník / zakázka</div>
+    <label>Jméno zákazníka nebo název zakázky</label>
+    <input type="text" id="f-zakaznik" placeholder="např. Jana Nováková – Hlavní 5, Praha">
+  </div>
+
+  <div class="card">
+    <div class="sec-title">Nová položka</div>
+    <div class="g2">
+      <div><label>Popis / umístění</label><input type="text" id="f-popis" placeholder="např. Ložnice – okno jižní"></div>
+      <div><label>Skupina látky</label>
+        <select id="f-skupina" onchange="nahled()">
+          <option value="1">Skupina 1 – Basic, Basic Reflex FR</option>
+          <option value="2">Skupina 2 – Basic Semi, Stripes, Wood, Press Reflex</option>
+          <option value="3">Skupina 3 – Bamboo, Bamboo Reflex, Living, Basic Blackout</option>
+          <option value="4">Skupina 4 – Zebra, Grass, Parquet</option>
+          <option value="5">Skupina 5 – Bamboo Pearl, Shine, Wave, Binary, Living Blackout, Sparkle</option>
+        </select>
+      </div>
+    </div>
+    <div class="g4">
+      <div><label>Šířka (mm)</label><input type="number" id="f-sirka" placeholder="např. 950" min="1" oninput="nahled()"></div>
+      <div><label>Výška (mm)</label><input type="number" id="f-vyska" placeholder="např. 1400" min="1" oninput="nahled()"></div>
+      <div><label>Počet kusů</label><input type="number" id="f-kusy" value="1" min="1" oninput="nahled()"></div>
+      <div><label>Montáž (Kč/ks)</label><input type="number" id="f-montaz" value="250" min="0" oninput="nahled()"></div>
+    </div>
+    <div class="g2">
+      <div><label>Ovládání</label>
+        <select id="f-ovladani">
+          <option value="Pravé">Pravé</option>
+          <option value="Levé">Levé</option>
+          <option value="Madlo">Madlo</option>
+        </select>
+      </div>
+      <div><label>Barva látky (číslo / název)</label><input type="text" id="f-barva" placeholder="např. 0301 nebo bílá"></div>
+    </div>
+
+    <div class="sec-title" style="margin-top:10px">Příplatky — klikněte pro aktivaci</div>
+    <div class="pripl-grid" id="pripl-grid"></div>
+
+    <div id="ap1-warn" class="ap1-warn">⚠ Model AP1 nelze použít v provedení Living Blackout (Skupina 5).</div>
+
+    <div class="prodl-row">
+      <label>Prodloužení ovládání</label>
+      <select id="f-prodlouzeni" onchange="nahled()">
+        <option value="0">Bez prodloužení</option>
+        <option value="664">1 000 mm — 664 Kč/ks</option>
+        <option value="809">1 250 mm — 809 Kč/ks</option>
+        <option value="935">1 500 mm — 935 Kč/ks</option>
+      </select>
+    </div>
+
+    <div class="sec-title">Lakování profilů (délka v bm)</div>
+    <div class="lak-grid">
+      <div class="lak-item"><label>PM1, PM3, PP1, PP2, PS3</label><input type="number" id="f-lak1" min="0" step="0.1" placeholder="0" oninput="nahled()"><span class="lak-unit">bm · 190 Kč</span></div>
+      <div class="lak-item"><label>PM2, PM5</label><input type="number" id="f-lak2" min="0" step="0.1" placeholder="0" oninput="nahled()"><span class="lak-unit">bm · 286 Kč</span></div>
+      <div class="lak-item"><label>PM4</label><input type="number" id="f-lak3" min="0" step="0.1" placeholder="0" oninput="nahled()"><span class="lak-unit">bm · 382 Kč</span></div>
+      <div class="lak-item"><label>Vodící lišty PS3 RAL</label><input type="number" id="f-lak4" min="0" step="0.1" placeholder="0" oninput="nahled()"><span class="lak-unit">bm výšky · 396 Kč</span></div>
+    </div>
+
+    <div class="nahled">
+      <div class="nahled-title">Náhled ceny</div>
+      <div id="nahled-body"><span style="color:var(--text-hint);font-size:12px">Zadejte rozměry.</span></div>
+    </div>
+
+    <button class="add-btn" id="add-btn" onclick="pridatPolozku()" disabled>＋ Přidat položku do objednávky</button>
+    <div id="form-note" class="note" style="margin-top:6px"></div>
+  </div>
+
+  <div id="polozky-wrap"></div>
+
+  <div class="card">
+    <div class="sec-title">Doprava</div>
+    <div class="zona-grid">
+      <button class="zona-btn zon-active" id="zona-0" onclick="vybratzonu(0,'Zóna 1 – do 5 km','Zdarma')">
+        <span class="zona-emoji">🟢</span><span class="zona-name">Zóna 1</span><span class="zona-km">do 5 km</span><span class="zona-price">Zdarma</span>
+      </button>
+      <button class="zona-btn" id="zona-300" onclick="vybratzonu(300,'Zóna 2 – 5–20 km','300 Kč')">
+        <span class="zona-emoji">🟡</span><span class="zona-name">Zóna 2</span><span class="zona-km">5–20 km</span><span class="zona-price">300 Kč</span>
+      </button>
+      <button class="zona-btn" id="zona-700" onclick="vybratzonu(700,'Zóna 3 – 21–50 km','700 Kč')">
+        <span class="zona-emoji">🟠</span><span class="zona-name">Zóna 3</span><span class="zona-km">21–50 km</span><span class="zona-price">700 Kč</span>
+      </button>
+      <button class="zona-btn" id="zona-1200" onclick="vybratzonu(1200,'Zóna 4 – 50–70 km','1 200 Kč')">
+        <span class="zona-emoji">🔴</span><span class="zona-name">Zóna 4</span><span class="zona-km">50–70 km</span><span class="zona-price">1 200 Kč</span>
+      </button>
+      <button class="zona-btn" id="zona-ind" onclick="vybratzonu(-1,'Nad 70 km','Individuálně')">
+        <span class="zona-emoji">⚫</span><span class="zona-name">Nad 70 km</span><span class="zona-km">70+ km</span><span class="zona-price">Individuálně</span>
+      </button>
+    </div>
+    <div id="zona-ind-input" style="display:none;margin-top:8px">
+      <label>Částka za dopravu (Kč)</label>
+      <input type="number" id="f-doprava-ind" placeholder="např. 1500" min="0" oninput="aktualizujIndividualni()" style="max-width:200px">
+    </div>
+    <div id="zona-note" class="note">Vybrána doprava: Zóna 1 – do 5 km – Zdarma</div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title">Souhrn objednávky</div>
+    <div id="total-body"><span class="empty">Zatím žádné položky.</span></div>
+    <button class="save-btn" id="save-btn" onclick="ulozitZakazku()" disabled>Uložit zakázku do Google tabulky</button>
+    <div class="status" id="status-msg"></div>
+  </div>
+</div>
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3aVcC7FwNHY7Q5re7KBGIJSpNSUQ5MkG-y0R4bUtcRVcT_5pbFOT2lWp-bNpwVI3R/exec';
+
+var WIDTHS  = [400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300];
+var HEIGHTS = [800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600];
+
+var PRICES = {
+  1:[[1384,1638,1874,2129,2385,2641,2873,3127,3385,3620,3875,4129,4366,4620,4873,5131,5366,5620,5875,6128],[1427,1685,1936,2212,2470,2727,2981,3237,3490,3747,4001,4255,4533,4790,5047,5299,5553,5812,6064,6315],[1491,1745,2021,2275,2556,2813,3086,3345,3620,3875,4150,4406,4682,4937,5213,5468,5749,6002,6280,6560],[1532,1812,2087,2362,2641,2897,3174,3447,3727,4001,4280,4556,4831,5108,5383,5666,5939,6216,6493,6769],[1577,1852,2151,2429,2702,3003,3278,3554,3854,4129,4406,4701,4982,5258,5553,5833,6132,6409,6682,6954],[1617,1916,2212,2511,2787,3086,3385,3683,3960,4255,4556,4851,5131,5430,5726,6025,6300,6599,6897,7198],[1685,1980,2275,2577,2873,3174,3490,3790,4088,4388,4682,4982,5299,5602,5897,6193,6493,6791,7090,7386],[1726,2021,2343,2664,2958,3278,3575,3895,4196,4513,4831,5131,5448,5749,6064,6366,6682,7003,7303,7604],[1770,2087,2406,2727,3046,3362,3683,4001,4323,4640,4964,5281,5602,5916,6236,6556,6875,7195,7513,7833],[1812,2151,2470,2813,3127,3447,3790,4108,4450,4768,5086,5430,5749,6064,6409,6727,7068,7386,7705,8023],[1874,2212,2534,2873,3214,3554,3895,4214,4556,4896,5237,5553,5897,6236,6576,6918,7236,7580,7920,8260],[1916,2256,2595,2958,3299,3641,3980,4323,4682,5023,5366,5704,6047,6409,6747,7090,7429,7790,8130,8470],[1962,2321,2679,3024,3385,3727,4088,4450,4790,5150,5491,5854,6216,6556,6918,7280,7620,7983,8322,8660],[2021,2385,2745,3110,3470,3830,4196,4556,4917,5281,5643,6002,6366,6727,7090,7449,7812,8174,8535,8896],[2065,2429,2813,3174,3554,3916,4280,4663,5023,5407,5769,6149,6514,6875,7258,7620,8002,8366,8751,9134],[2107,2493,2873,3258,3620,4001,4388,4768,5150,5534,5916,6280,6663,7046,7429,7812,8193,8556,8941,9326],[2151,2556,2937,3320,3707,4108,4491,4873,5258,5666,6047,6430,6810,7218,7601,7983,8366,8767,9154,9540],[2212,2595,3003,3405,3790,4196,4596,4982,5383,5789,6173,6576,6985,7365,7770,8174,8556,8963,9367,9769],[2256,2664,3065,3470,3875,4280,4682,5086,5513,5916,6323,6727,7132,7533,7938,8346,8751,9154,9559,9965]],
+  2:[[1593,1894,2171,2470,2745,3046,3320,3620,3895,4196,4473,4768,5046,5343,5620,5916,6193,6493,6766,7039],[1662,1962,2256,2556,2852,3127,3427,3727,4023,4323,4620,4917,5213,5513,5812,6110,6409,6706,7003,7299],[1703,2021,2321,2641,2937,3237,3554,3854,4170,4473,4790,5086,5407,5704,6002,6323,6620,6940,7236,7533],[1770,2087,2406,2727,3046,3345,3661,3980,4300,4620,4937,5258,5576,5897,6216,6534,6854,7150,7472,7793],[1830,2151,2470,2813,3127,3447,3790,4108,4450,4768,5086,5430,5749,6088,6409,6727,7068,7386,7728,8068],[1874,2212,2556,2897,3237,3554,3895,4237,4578,4917,5258,5602,5916,6260,6599,6940,7280,7620,7960,8300],[1936,2275,2618,2981,3320,3661,4023,4366,4701,5067,5407,5749,6110,6451,6791,7150,7492,7834,8193,8553],[1980,2343,2702,3065,3427,3767,4129,4491,4851,5213,5553,5916,6280,6640,7003,7342,7705,8069,8429,8792],[2045,2406,2787,3153,3514,3875,4255,4620,4982,5366,5726,6088,6451,6832,7195,7556,7920,8304,8662,9023],[2107,2470,2852,3237,3620,3980,4366,4746,5131,5491,5875,6260,6640,7003,7386,7770,8151,8516,8896,9278],[2151,2534,2937,3320,3707,4088,4491,4873,5258,5643,6047,6430,6810,7195,7580,7983,8366,8751,9135,9517],[2212,2618,3003,3405,3811,4196,4596,5003,5383,5789,6193,6599,6985,7386,7790,8174,8577,8985,9367,9748],[2275,2679,3086,3490,3895,4300,4724,5131,5534,5939,6346,6747,7175,7580,7983,8174,8791,9196,9625,10050],[2321,2745,3153,3575,4001,4406,4831,5258,5666,6088,6514,6918,7342,7749,8174,8601,9003,9429,9854,10279],[2385,2813,3237,3661,4088,4513,4937,5383,5812,6236,6663,7090,7513,7938,8366,8791,9238,9664,10088,10515],[2429,2873,3320,3747,4196,4620,5067,5491,5939,6384,6810,7258,7686,8130,8577,9003,9449,9875,10324,10773],[2493,2937,3385,3830,4280,4724,5173,5620,6064,6534,6985,7429,7876,8322,8767,9218,9664,10109,10554,11001],[2556,3003,3470,3916,4388,4831,5299,5749,6216,6663,7132,7580,8046,8516,8963,9429,9875,10345,10791,11238],[2595,3065,3530,4001,4473,4937,5407,5875,6346,6810,7280,7749,8215,8685,9154,9625,10088,10554,11027,11498]],
+  3:[[1830,2151,2493,2813,3153,3470,3811,4129,4473,4790,5131,5448,5789,6110,6451,6766,7108,7429,7770,8111],[1894,2234,2577,2917,3258,3597,3938,4280,4620,4964,5299,5643,5982,6323,6663,7003,7342,7686,8024,8363],[1962,2321,2664,3024,3362,3727,4065,4429,4790,5131,5491,5833,6193,6534,6897,7236,7601,7960,8304,8645],[2021,2385,2745,3110,3470,3854,4214,4578,4937,5299,5666,6025,6384,6747,7132,7492,7852,8215,8577,8936],[2087,2470,2831,3214,3597,3960,4341,4724,5086,5468,5854,6216,6599,6960,7342,7728,8086,8470,8854,9236],[2151,2534,2917,3320,3707,4088,4473,4851,5258,5643,6025,6409,6791,7195,7580,7960,8346,8727,9112,9498],[2212,2618,3024,3405,3811,4214,4596,5003,5407,5812,6193,6599,7003,7407,7790,8193,8601,8985,9385,9787],[2275,2679,3110,3514,3916,4323,4746,5150,5553,5982,6384,6791,7195,7620,8024,8429,8833,9258,9664,10068],[2343,2767,3194,3620,4023,4450,4873,5299,5726,6132,6556,6985,7407,7834,8238,8662,9088,9512,9939,10365],[2406,2831,3278,3707,4150,4578,5003,5448,5875,6300,6747,7175,7601,8046,8470,8896,9343,9770,10218,10667],[2470,2917,3362,3811,4255,4701,5131,5576,6025,6470,6918,7365,7812,8260,8703,9154,9579,10024,10472,10918],[2534,3003,3447,3895,4366,4811,5281,5726,6193,6640,7108,7556,8002,8470,8919,9385,9834,10304,10749,11194],[2595,3065,3530,4001,4473,4937,5407,5875,6346,6810,7280,7749,8215,8685,9154,9625,10088,10554,11027,11498],[2664,3153,3620,4108,4578,5067,5534,6025,6493,6985,7449,7938,8409,8896,9367,9854,10345,10812,11303,11796],[2727,3214,3707,4196,4682,5173,5683,6173,6663,7150,7642,8130,8619,9112,9602,10088,10580,11070,11558,12045],[2787,3299,3790,4300,4811,5299,5812,6300,6810,7323,7812,8322,8812,9324,9834,10324,10832,11321,11837,12351],[2852,3362,3875,4406,4917,5430,5939,6451,6960,7472,8002,8516,9026,9535,10046,10554,11089,11601,12111,12622],[2917,3447,3980,4491,5023,5553,6064,6599,7132,7642,8174,8703,9218,9748,10281,10812,11321,11856,12388,12925],[2981,3514,4065,4596,5131,5666,6216,6747,7280,7812,8366,8896,9429,9961,10495,11030,11579,12111,12641,13170]],
+  4:[[2679,3174,3641,4129,4620,5086,5576,6064,6534,7025,7513,7983,8470,8963,9449,9920,10411,10898,11366,11836],[2767,3278,3767,4280,4768,5281,5769,6280,6766,7280,7770,8283,8767,9281,9770,10281,10773,11261,11769,12280],[2873,3385,3895,4429,4937,5448,5959,6493,7003,7513,8024,8556,9067,9579,10109,10621,11132,11643,12173,12702],[2958,3490,4023,4556,5086,5643,6173,6706,7236,7770,8304,8833,9367,9898,10429,10962,11493,12025,12558,13090],[3065,3597,4150,4701,5258,5812,6366,6918,7449,8002,8556,9112,9664,10218,10773,11303,11856,12409,12963,13519],[3153,3727,4280,4851,5430,5982,6556,7132,7686,8260,8833,9385,9961,10514,11089,11665,12220,12791,13366,13941],[3237,3830,4406,5003,5576,6173,6747,7342,7920,8492,9088,9664,10260,10832,11429,12004,12600,13176,13750,14323],[3345,3938,4533,5150,5749,6346,6940,7556,8151,8751,9343,9939,10554,11155,11751,12347,12963,13559,14155,14750],[3427,4046,4663,5281,5897,6514,7132,7749,8386,9003,9625,10237,10855,11470,12087,12705,13323,13942,14560,15176],[3530,4170,4790,5430,6064,6706,7342,7960,8601,9238,9875,10514,11155,11769,12409,13048,13689,14326,14962,15599],[3620,4280,4917,5576,6236,6875,7533,8174,8833,9493,10131,10791,11237,12087,12749,13389,14047,14708,15347,15988],[3727,4388,5046,5726,6384,7068,7728,8386,9067,9730,10411,11070,11729,12409,13067,13750,14409,15093,15751,16408],[3811,4491,5173,5875,6556,7236,7920,8601,9302,9983,10664,11344,12025,12727,13405,14090,14771,15450,16156,16861],[3895,4596,5299,6002,6706,7407,8110,8812,9512,10218,10922,11624,12324,13025,13729,14431,15135,15836,16538,17238],[4001,4724,5430,6149,6875,7601,8304,9026,9748,10472,11195,11897,12622,13346,14069,14790,15496,16219,16943,17668],[4088,4831,5553,6300,7025,7770,8516,9238,9983,10704,11453,12197,12922,13664,14391,15135,15878,16602,17346,18089],[4196,4937,5683,6451,7195,7938,8703,9449,10218,10962,11706,12476,13217,13984,14731,15474,16241,16986,17728,18472],[4280,5046,5812,6576,7365,8130,8896,9664,10429,11220,11984,12749,13517,14283,15049,15836,16602,17370,18136,18904],[4366,5150,5939,6727,7513,8304,9088,9875,10664,11453,12242,13025,13813,14602,15388,16178,16965,17752,18539,19327]],
+  5:[[3110,3660,4238,4790,5343,5897,6470,7025,7579,8156,8703,9258,9814,10388,10940,11493,12047,12623,13176,13728],[3214,3790,4387,4964,5534,6110,6682,7280,7852,8429,9003,9579,10177,10749,11321,11897,12476,13067,13642,14217],[3320,3916,4511,5131,5726,6322,6918,7515,8110,8703,9302,9920,10514,11111,11706,12305,12897,13496,14090,14684],[3427,4046,4663,5281,5897,6532,7150,7770,8386,9003,9618,10237,10855,11474,12092,12705,13323,13942,14560,15176],[3530,4170,4811,5448,6088,6727,7365,8002,8644,9281,9920,10554,11195,11837,12476,13114,13750,14391,15026,15664],[3660,4298,4964,5620,6280,6939,7599,8260,8919,9559,10218,10877,11538,12197,12857,13517,14173,14815,15474,16132],[3766,4429,5108,5787,6470,7150,7809,8492,9174,9854,10538,11195,11877,12558,13240,13922,14580,15260,15942,16627],[3872,4556,5258,5959,6664,7342,8047,8751,9454,10131,10836,11538,12220,12921,13624,14326,15006,15710,16412,17115],[3980,4701,5407,6134,6832,7556,8283,8982,9707,10429,11132,11856,12580,13283,14007,14708,15433,16156,16857,17560],[4088,4831,5553,6299,7025,7770,8492,9238,9966,10707,11456,12173,12921,13642,14391,15111,15858,16579,17329,18079],[4196,4964,5704,6470,7218,7960,8727,9471,10237,10982,11750,12494,13262,14007,14775,15519,16285,17028,17794,18559],[4298,5086,5854,6620,7409,8175,8961,9729,10495,11283,12047,12839,13602,14370,15156,15924,16709,17474,18239,19005],[4404,5213,6002,6792,7599,8386,9174,9983,10773,11558,12347,13156,13942,14731,15541,16325,17112,17923,18711,19501],[4511,5343,6150,6959,7770,8601,9408,10218,11027,11856,12663,13476,14278,15111,15924,16729,17539,18344,19178,20013],[4640,5468,6299,7132,7960,8792,9618,10471,11303,12133,12963,13791,14621,15474,16305,17134,17962,18797,19622,20449],[4749,5602,6451,7304,8156,9003,9854,10707,11558,12409,13262,14113,14985,15836,16689,17539,18390,19241,20095,20952],[4854,5726,6599,7472,8345,9218,10091,10962,11837,12705,13580,14453,15326,16198,17070,17946,18816,19688,20562,21434],[4964,5854,6747,7642,8535,9408,10304,11195,12092,12983,13877,14775,15668,16562,17455,18344,19241,20116,21005,21897],[5067,5982,6899,7790,8703,9618,10538,11456,12365,13283,14173,15093,16006,16921,17841,18749,19647,20562,21477,22392]]
+};
+
+var PRIPLATKY = [
+  {id:'pp1',  name:'Model PP1',              sazba:309,  j:'ks'},
+  {id:'pp2',  name:'Model PP2',              sazba:515,  j:'ks'},
+  {id:'ap1',  name:'Model AP1',              sazba:1306, j:'ks'},
+  {id:'am1',  name:'Model AM1',              sazba:1306, j:'ks'},
+  {id:'am2',  name:'Model AM2',              sazba:2097, j:'ks'},
+  {id:'pm3m', name:'Model PM3M',             sazba:242,  j:'ks'},
+  {id:'ps3',  name:'Vodici lista PS3',       sazba:377,  j:'m-vysky'},
+  {id:'drevo',name:'Profily imitace dreva',  sazba:363,  j:'zaluzie'}
+];
+
+var aktivni = {};
+var polozky = [];
+var nextId = 1;
+var dopravaHodnota = 0;
+var dopravaLabel = 'Zona 1 - do 5 km';
+
+function nb(arr,val){for(var i=0;i<arr.length;i++){if(arr[i]>=val)return{idx:i,v:arr[i]};}return null;}
+function ceil(v){return Math.ceil(v);}
+function kc(v){return v.toLocaleString('cs-CZ')+' Kč';}
+
+function renderPriplatky(){
+  aktivni={};
+  var g=document.getElementById('pripl-grid');
+  g.innerHTML='';
+  PRIPLATKY.forEach(function(p){
+    var d=document.createElement('div');
+    d.className='pitem';
+    d.id='pitem-'+p.id;
+    var jl=p.j==='ks'?'Kč/ks':p.j==='m-vysky'?'Kč/m výšky × 2':'Kč/žaluzie';
+    d.innerHTML='<span class="pn">'+p.name+'</span><span class="pp">'+p.sazba+' '+jl+'</span>';
+    d.onclick=function(){
+      if(aktivni[p.id]){delete aktivni[p.id];d.classList.remove('on');}
+      else{aktivni[p.id]=true;d.classList.add('on');}
+      checkAP1warn();
+      nahled();
+    };
+    g.appendChild(d);
+  });
+}
+
+function checkAP1warn(){
+  var sk=parseInt(document.getElementById('f-skupina').value);
+  var w=document.getElementById('ap1-warn');
+  w.style.display=(sk===5&&aktivni['ap1'])?'block':'none';
+}
+
+function kalkuluj(skupina,sirkaIn,vyskaIn,kusy,montazKs,priplIds,lak1,lak2,lak3,lak4,prodlVal){
+  var s=nb(WIDTHS,sirkaIn);
+  var v=nb(HEIGHTS,vyskaIn);
+  var warn=!s||!v;
+  if(!s)s={idx:WIDTHS.length-1,v:WIDTHS[WIDTHS.length-1]};
+  if(!v)v={idx:HEIGHTS.length-1,v:HEIGHTS[HEIGHTS.length-1]};
+  var zaklCena=PRICES[skupina][v.idx][s.idx];
+  var pripl=0;
+  var priplRozpis=[];
+  var priplNazvy=[];
+  PRIPLATKY.forEach(function(p){
+    if(!priplIds[p.id])return;
+    var castka;
+    if(p.j==='ks'){castka=p.sazba;priplRozpis.push({name:p.name,castka:castka,info:p.sazba+' Kč/ks'});}
+    else if(p.j==='m-vysky'){castka=ceil(p.sazba*(v.v/1000)*2);priplRozpis.push({name:p.name,castka:castka,info:p.sazba+' Kč/m × '+(v.v/1000).toFixed(2)+' m × 2'});}
+    else{castka=p.sazba;priplRozpis.push({name:p.name,castka:castka,info:p.sazba+' Kč/žaluzie'});}
+    priplNazvy.push(p.name);
+    pripl+=castka;
+  });
+  if(prodlVal>0){var pn=prodlVal===664?'1000 mm':prodlVal===809?'1250 mm':'1500 mm';priplRozpis.push({name:'Prodloužení ovládání '+pn,castka:prodlVal,info:prodlVal+' Kč/ks'});priplNazvy.push('Prodloužení ovládání');pripl+=prodlVal;}
+  if(lak1>0){var vv=ceil(lak1*190);priplRozpis.push({name:'Lakování PM1/PM3/PP1/PP2/PS3',castka:vv,info:lak1+' bm × 190 Kč'});pripl+=vv;}
+  if(lak2>0){var vv2=ceil(lak2*286);priplRozpis.push({name:'Lakování PM2/PM5',castka:vv2,info:lak2+' bm × 286 Kč'});pripl+=vv2;}
+  if(lak3>0){var vv3=ceil(lak3*382);priplRozpis.push({name:'Lakování PM4',castka:vv3,info:lak3+' bm × 382 Kč'});pripl+=vv3;}
+  if(lak4>0){var vv4=ceil(lak4*396);priplRozpis.push({name:'Lakování PS3 RAL',castka:vv4,info:lak4+' bm výšky × 396 Kč'});pripl+=vv4;}
+  var cena1ks=zaklCena+pripl;
+  var bezM=cena1ks*kusy;
+  var sM=bezM+montazKs*kusy;
+  return{s:s,v:v,zaklCena:zaklCena,pripl:pripl,priplRozpis:priplRozpis,priplNazvy:priplNazvy,cena1ks:cena1ks,bezM:bezM,sM:sM,warn:warn};
+}
+
+function nahled(){
+  var skupina=parseInt(document.getElementById('f-skupina').value);
+  var sirkaIn=parseInt(document.getElementById('f-sirka').value)||0;
+  var vyskaIn=parseInt(document.getElementById('f-vyska').value)||0;
+  var kusy=parseInt(document.getElementById('f-kusy').value)||1;
+  var montazKs=parseInt(document.getElementById('f-montaz').value)||0;
+  var lak1=parseFloat(document.getElementById('f-lak1').value)||0;
+  var lak2=parseFloat(document.getElementById('f-lak2').value)||0;
+  var lak3=parseFloat(document.getElementById('f-lak3').value)||0;
+  var lak4=parseFloat(document.getElementById('f-lak4').value)||0;
+  var prodlVal=parseInt(document.getElementById('f-prodlouzeni').value)||0;
+  var nb_box=document.getElementById('nahled-body');
+  var addBtn=document.getElementById('add-btn');
+  checkAP1warn();
+  if(!sirkaIn||!vyskaIn){nb_box.innerHTML='<span style="color:var(--text-hint);font-size:12px">Zadejte rozměry.</span>';addBtn.disabled=true;return;}
+  var r=kalkuluj(skupina,sirkaIn,vyskaIn,kusy,montazKs,aktivni,lak1,lak2,lak3,lak4,prodlVal);
+  var html='<div class="nahled-row"><span class="nl">Rozměr z ceníku</span><span class="nv">'+r.s.v+' × '+r.v.v+' mm</span></div>';
+  html+='<div class="nahled-row"><span class="nl">Základní cena (Sk. '+skupina+')</span><span class="nv">'+kc(r.zaklCena)+'</span></div>';
+  if(r.pripl>0)html+='<div class="nahled-row"><span class="nl">Příplatky celkem</span><span class="nv">+ '+kc(r.pripl)+'</span></div>';
+  if(montazKs>0)html+='<div class="nahled-row"><span class="nl">Montáž '+kusy+' ks</span><span class="nv">+ '+kc(montazKs*kusy)+'</span></div>';
+  html+='<div class="nahled-total"><span class="nl">Cena '+(kusy>1?kusy+' ks s mont.':'1 ks s mont.')+'</span><span class="nv">'+kc(r.sM)+'</span></div>';
+  if(r.warn)html+='<div class="warn" style="margin-top:6px">⚠ Rozměr přesahuje rozsah ceníku.</div>';
+  nb_box.innerHTML=html;
+  addBtn.disabled=false;
+}
+
+function pridatPolozku(){
+  var skupina=parseInt(document.getElementById('f-skupina').value);
+  var sirkaIn=parseInt(document.getElementById('f-sirka').value)||0;
+  var vyskaIn=parseInt(document.getElementById('f-vyska').value)||0;
+  var kusy=parseInt(document.getElementById('f-kusy').value)||1;
+  var montazKs=parseInt(document.getElementById('f-montaz').value)||0;
+  var popis=document.getElementById('f-popis').value.trim()||'Bez popisu';
+  var ovladani=document.getElementById('f-ovladani').value;
+  var barva=document.getElementById('f-barva').value.trim()||'-';
+  var lak1=parseFloat(document.getElementById('f-lak1').value)||0;
+  var lak2=parseFloat(document.getElementById('f-lak2').value)||0;
+  var lak3=parseFloat(document.getElementById('f-lak3').value)||0;
+  var lak4=parseFloat(document.getElementById('f-lak4').value)||0;
+  var prodlVal=parseInt(document.getElementById('f-prodlouzeni').value)||0;
+  var priplIds=JSON.parse(JSON.stringify(aktivni));
+  var note=document.getElementById('form-note');
+  if(!sirkaIn||!vyskaIn){note.textContent='Zadejte šířku a výšku.';return;}
+  var r=kalkuluj(skupina,sirkaIn,vyskaIn,kusy,montazKs,priplIds,lak1,lak2,lak3,lak4,prodlVal);
+  polozky.push({id:nextId++,skupina:skupina,sirkaIn:sirkaIn,vyskaIn:vyskaIn,kusy:kusy,montazKs:montazKs,popis:popis,ovladani:ovladani,barva:barva,lak1:lak1,lak2:lak2,lak3:lak3,lak4:lak4,prodlVal:prodlVal,priplIds:priplIds,r:r});
+  document.getElementById('f-popis').value='';
+  document.getElementById('f-barva').value='';
+  document.getElementById('f-sirka').value='';
+  document.getElementById('f-vyska').value='';
+  document.getElementById('f-kusy').value='1';
+  document.getElementById('f-montaz').value='250';
+  document.getElementById('f-ovladani').value='Pravé';
+  document.getElementById('f-lak1').value='';
+  document.getElementById('f-lak2').value='';
+  document.getElementById('f-lak3').value='';
+  document.getElementById('f-lak4').value='';
+  document.getElementById('f-prodlouzeni').value='0';
+  document.getElementById('f-skupina').value='1';
+  document.getElementById('add-btn').disabled=true;
+  document.getElementById('ap1-warn').style.display='none';
+  note.textContent='';
+  renderPriplatky();
+  document.getElementById('nahled-body').innerHTML='<span style="color:var(--text-hint);font-size:12px">Zadejte rozměry.</span>';
+  renderPolozky();
+  renderTotal();
+}
+
+function smazat(id){polozky=polozky.filter(function(p){return p.id!==id;});renderPolozky();renderTotal();}
+
+function toggle(id){
+  var body=document.getElementById('pb-'+id);
+  var head=document.getElementById('ph-'+id);
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  if(open)head.classList.remove('open');else head.classList.add('open');
+}
+
+function renderPolozky(){
+  var wrap=document.getElementById('polozky-wrap');
+  if(!polozky.length){wrap.innerHTML='';return;}
+  var html='<div class="card"><div class="sec-title">Položky objednávky ('+polozky.length+')</div>';
+  polozky.forEach(function(p,i){
+    var r=p.r;
+    var bd='<div class="bd-row"><span class="bd-l">Skupina látky</span><span class="bd-v">Skupina '+p.skupina+'</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Zadané rozměry</span><span class="bd-v">'+p.sirkaIn+' × '+p.vyskaIn+' mm</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Rozměr z ceníku</span><span class="bd-v">'+r.s.v+' × '+r.v.v+' mm</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Ovládání</span><span class="bd-v">'+p.ovladani+'</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Barva látky</span><span class="bd-v">'+p.barva+'</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Základní cena</span><span class="bd-v">'+kc(r.zaklCena)+'</span></div>';
+    r.priplRozpis.forEach(function(pr){bd+='<div class="bd-row"><span class="bd-l">'+pr.name+' <small style="color:var(--text-hint)">('+pr.info+')</small></span><span class="bd-v">+ '+kc(pr.castka)+'</span></div>';});
+    if(p.kusy>1)bd+='<div class="bd-row"><span class="bd-l">Cena 1 ks</span><span class="bd-v">'+kc(r.cena1ks)+'</span></div>';
+    if(p.montazKs>0)bd+='<div class="bd-row"><span class="bd-l">Montáž '+p.kusy+' ks × '+kc(p.montazKs)+'</span><span class="bd-v">+ '+kc(p.montazKs*p.kusy)+'</span></div>';
+    bd+='<div class="bd-row"><span class="bd-l">Celkem s montáží</span><span class="bd-v">'+kc(r.sM)+'</span></div>';
+    var warnHtml=r.warn?'<div class="warn">⚠ Rozměr přesahuje rozsah ceníku.</div>':'';
+    html+='<div class="polozka">'
+      +'<div class="pol-head" id="ph-'+p.id+'" onclick="toggle('+p.id+')">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span class="pol-num">'+(i+1)+'.</span>'
+      +'<div><div class="pol-title">'+p.popis+'</div>'
+      +'<div class="pol-meta">Sk. '+p.skupina+' · '+p.sirkaIn+'×'+p.vyskaIn+' mm · '+p.kusy+' ks · '+p.ovladani+' · barva: '+p.barva+'</div>'
+      +'</div></div>'
+      +'<div style="display:flex;align-items:center">'
+      +'<span class="pol-price">'+kc(r.sM)+'</span>'
+      +'<button class="pol-del" onclick="event.stopPropagation();smazat('+p.id+')" title="Smazat">×</button>'
+      +'<span class="chevron">▾</span>'
+      +'</div></div>'
+      +'<div class="pol-body" id="pb-'+p.id+'">'+bd+warnHtml+'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
+function renderTotal(){
+  var body=document.getElementById('total-body');
+  var btn=document.getElementById('save-btn');
+  if(!polozky.length){body.innerHTML='<span class="empty">Zatím žádné položky.</span>';btn.disabled=true;return;}
+  var sumBez=polozky.reduce(function(a,p){return a+p.r.bezM;},0);
+  var sumMontaz=polozky.reduce(function(a,p){return a+p.montazKs*p.kusy;},0);
+  var sumKs=polozky.reduce(function(a,p){return a+p.kusy;},0);
+  var sumS=sumBez+sumMontaz;
+  var html='<div class="metric-row">'
+    +'<div class="metric"><div class="ml">Počet položek</div><div class="mv">'+polozky.length+'</div></div>'
+    +'<div class="metric"><div class="ml">Celkem kusů</div><div class="mv">'+sumKs+'</div></div>'
+    +'<div class="metric"><div class="ml">Bez montáže</div><div class="mv">'+kc(sumBez)+'</div></div>'
+    +'</div>';
+  polozky.forEach(function(p,i){
+    html+='<div class="total-row"><span class="tl">'+(i+1)+'. '+p.popis+' <small style="color:var(--text-hint)">('+p.kusy+' ks · '+p.ovladani+')</small></span><span class="tv">'+kc(p.r.sM)+'</span></div>';
+  });
+  if(dopravaHodnota===0){
+    html+='<div class="total-row"><span class="tl">Doprava ('+dopravaLabel+')</span><span class="tv" style="color:var(--accent)">Zdarma</span></div>';
+  }else if(dopravaHodnota===-1){
+    html+='<div class="total-row"><span class="tl">Doprava ('+dopravaLabel+')</span><span class="tv">Individuálně</span></div>';
+  }else{
+    sumS+=dopravaHodnota;
+    html+='<div class="total-row"><span class="tl">Doprava ('+dopravaLabel+')</span><span class="tv">+ '+kc(dopravaHodnota)+'</span></div>';
+  }
+  html+='<div class="total-row"><span>Celkem vč. montáže a dopravy</span><span>'+kc(sumS)+'</span></div>';
+  body.innerHTML=html;
+  btn.disabled=false;
+}
+
+function vybratzonu(hodnota,label,cena){
+  dopravaHodnota=hodnota;dopravaLabel=label;
+  ['zona-0','zona-300','zona-700','zona-1200','zona-ind'].forEach(function(id){document.getElementById(id).classList.remove('zon-active');});
+  var idMap={0:'zona-0',300:'zona-300',700:'zona-700',1200:'zona-1200'};
+  var activeId=hodnota===-1?'zona-ind':idMap[hodnota];
+  if(activeId)document.getElementById(activeId).classList.add('zon-active');
+  var indInput=document.getElementById('zona-ind-input');
+  if(hodnota===-1){indInput.style.display='block';document.getElementById('zona-note').textContent='Zadejte individuální částku dopravy.';}
+  else{indInput.style.display='none';document.getElementById('zona-note').textContent='Vybrána doprava: '+label+' – '+cena;}
+  renderTotal();
+}
+
+function aktualizujIndividualni(){
+  var val=parseInt(document.getElementById('f-doprava-ind').value)||0;
+  dopravaHodnota=val>0?val:-1;
+  dopravaLabel='Nad 70 km – individuálně';
+  renderTotal();
+}
+
+function ulozitZakazku(){
+  var zakaznik=document.getElementById('f-zakaznik').value.trim()||'Neuvedeno';
+  var btn=document.getElementById('save-btn');
+  var status=document.getElementById('status-msg');
+  btn.disabled=true;btn.textContent='Ukládám...';status.style.display='none';
+  var dopravaCastka=dopravaHodnota===-1?'Individuálně':dopravaHodnota===0?'Zdarma':kc(dopravaHodnota);
+  var celkemVse=polozky.reduce(function(a,p){return a+p.r.sM;},0)+(dopravaHodnota>0?dopravaHodnota:0);
+  var data={
+    zakaznik:zakaznik,
+    datum:new Date().toLocaleDateString('cs-CZ'),
+    dopravaLabel:dopravaLabel+' ('+dopravaCastka+')',
+    dopravaPrice:dopravaHodnota>0?dopravaHodnota:0,
+    celkemVse:celkemVse,
+    polozky:polozky.map(function(p,idx){return{cislo:idx+1,popis:p.popis,skupina:p.skupina,sirka:p.r.s.v,vyska:p.r.v.v,ks:p.kusy,ovladani:p.ovladani,barva:p.barva,zaklad:p.r.zaklCena,priplatky:p.r.pripl,montaz:p.montazKs*p.kusy,celkem:p.r.sM};})
+  };
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'text/plain' }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if(res.status === 'ok'){
+      status.className='status ok';
+      status.textContent='✓ Zakázka pro „'+zakaznik+'“ byla uložena do Google tabulky.';
+    } else {
+      status.className='status err';
+      status.textContent='✗ Chyba: '+res.message;
+    }
+    status.style.display='block';
+    btn.textContent='Uložit zakázku do Google tabulky';
+    btn.disabled=false;
+  })
+  .catch(function(){
+    status.className='status err';
+    status.textContent='✗ Nepodařilo se připojit k serveru.';
+    status.style.display='block';
+    btn.textContent='Uložit zakázku do Google tabulky';
+    btn.disabled=false;
+  });
+}
+
+renderPriplatky();
+</script>
+</body>
+</html>
